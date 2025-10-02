@@ -1,0 +1,122 @@
+Das Hochladen von Code per WiFi (OTA = Over-The-Air) auf einen ESP32 mit der Arduino IDE ist möglich – und sehr praktisch. Hier ist eine klare Schritt-für-Schritt-Anleitung, wie du deinen ESP32 per OTA flashen kannst:
+✅ Voraussetzungen
+
+    Arduino IDE installiert
+
+    ESP32-Plattform installiert (über Boardverwalter)
+
+    ESP32 ist bereits einmal per USB geflasht worden (für OTA-Setup)
+
+    PC und ESP32 sind im gleichen WLAN
+
+    Die OTA-Bibliothek (ArduinoOTA) ist im Sketch eingebunden
+
+🧠 Funktionsprinzip
+
+Du lädst einmalig einen OTA-fähigen Sketch per USB auf deinen ESP32. Danach kannst du diesen und alle folgenden OTA-fähigen Sketches per WLAN hochladen.
+✅ Schritt-für-Schritt-Anleitung
+🔹 1. ArduinoOTA Bibliothek einbinden
+
+#include <WiFi.h>
+#include <ArduinoOTA.h>
+
+🔹 2. WLAN-Zugangsdaten einstellen
+
+const char* ssid = "DEIN_WIFI_NAME";
+const char* password = "DEIN_WIFI_PASSWORT";
+
+🔹 3. Setup erweitern
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("WiFi verbunden");
+  Serial.println(WiFi.localIP());
+
+  // OTA initialisieren
+  ArduinoOTA.setHostname("esp32-ota"); // Optional
+
+  ArduinoOTA.onStart([]() {
+    Serial.println("OTA Start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nOTA Ende");
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("OTA Fehler [%u]\n", error);
+  });
+
+  ArduinoOTA.begin();
+  Serial.println("OTA bereit");
+}
+
+🔹 4. loop() anpassen
+
+void loop() {
+  ArduinoOTA.handle();  // Muss regelmäßig aufgerufen werden
+  // Dein restlicher Code hier
+}
+
+🧪 5. Einmal per USB hochladen
+
+    Schließe deinen ESP32 per USB an.
+
+    Wähle das richtige Board und Port in der Arduino IDE.
+
+    Lade den OTA-fähigen Sketch per USB hoch.
+
+📡 6. Ab jetzt: OTA verfügbar
+
+    Jetzt kannst du in der Arduino IDE im Menü „Werkzeuge > Port“ einen neuen Port im Netzwerk sehen, z. B.:
+
+    esp32-ota at 192.168.1.23
+
+    Wähle diesen Netzwerkport aus.
+
+    Klicke auf „Hochladen“, und der Sketch wird über WLAN übertragen.
+
+⚠️ Wichtige Hinweise
+Punkt	Info
+Erste Übertragung	Muss per USB erfolgen (damit OTA eingerichtet wird)
+OTA läuft nur	Wenn ArduinoOTA.handle() in loop() aufgerufen wird
+Firewall	Stelle sicher, dass keine Firewall OTA-Verbindungen blockiert
+Neustart nach Upload	Der ESP32 startet automatisch nach dem OTA-Upload neu
+🧩 Beispiel: OTA-fähiger Basis-Sketch
+
+#include <WiFi.h>
+#include <ArduinoOTA.h>
+
+const char* ssid = "DEIN_WIFI_NAME";
+const char* password = "DEIN_WIFI_PASSWORT";
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi verbunden, IP: " + WiFi.localIP().toString());
+
+  ArduinoOTA.setHostname("esp32-ota");
+
+  ArduinoOTA.begin();
+  Serial.println("OTA bereit");
+}
+
+void loop() {
+  ArduinoOTA.handle();
+}
+
+Wenn du willst, kann ich dir deinen bestehenden LED-Code OTA-fähig machen – sag einfach Bescheid!
+Du:
+muss das ota script immer im hochgeladenen skript vorhanden sein?
+ChatGPT:
+
+Ja, das OTA-Script (bzw. die OTA-Funktionalität) muss immer Teil deines hochgeladenen Sketches sein, wenn du OTA weiterhin nutzen willst.
